@@ -382,6 +382,7 @@ if (fsData?.despesas?.length) {
     localStorage.setItem('ir_config_v2', JSON.stringify(cfg));
     loadCfg();
   }
+  if (fsData.irSync) localStorage.setItem('ir_sync', fsData.irSync);
 } else if (despesas.length > 0) {
   // Firestore vazio → faz upload dos dados locais
   fsSave(despesas, cfg);
@@ -407,6 +408,7 @@ fsListen(data => {
     localStorage.setItem('ir_config_v2', JSON.stringify(cfg));
     loadCfg();
   }
+  if (data.irSync) localStorage.setItem('ir_sync', data.irSync);
   renderAll();
   toast('🔄 Dados atualizados');
 });

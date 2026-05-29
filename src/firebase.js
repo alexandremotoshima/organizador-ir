@@ -36,9 +36,10 @@ export function fsSave(despesas, config) {
   clearTimeout(_saveTimer);
   _saveTimer = setTimeout(async () => {
     try {
-      const at = new Date().toISOString();
+      const at     = new Date().toISOString();
       _lastSavedAt = at;
-      await setDoc(REF, { despesas, config, updatedAt: at });
+      const irSync = localStorage.getItem('ir_sync') || null;
+      await setDoc(REF, { despesas, config, irSync, updatedAt: at });
     } catch (e) {
       console.warn('[FS] save falhou:', e.message);
     }

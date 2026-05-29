@@ -5,8 +5,8 @@ import { brl, fmtDate, escH } from './helpers.js';
 // ── Carta de reembolso complementar ──────────────────────────────────────────
 const PLANO_NOMES = {
   bradesco: 'Bradesco Saúde',
-  sa_kc:    'Sulamérica Saúde (KC)',
-  sa_part:  'Sulamérica Saúde (PART)',
+  sa_kc:    'Sulamérica Saúde',
+  sa_part:  'Sulamérica Saúde',
 };
 
 // Para cada plano, qual é o plano "destino" da carta complementar
@@ -252,7 +252,7 @@ window._rbGerarCarta = function(expId, planoReembolsante) {
   const dataConsulta   = fmtDate(d.data);
   const valorTotal     = brl(d.valor);
   const valorReemb     = brl(r.valor);
-  const beneficiario   = escH(cfg.filho);
+  const beneficiario   = escH(cfg.filho === 'Filho/a' ? 'Lucas Naoki Motoshima' : cfg.filho);
   const titular        = escH(cfg.titular);
   const descricao      = escH(d.desc.charAt(0).toLowerCase() + d.desc.slice(1));
 

@@ -336,7 +336,7 @@
 <!-- ── Bootstrap (ES modules) ───────────────────────────────────────────────── -->
 <script type="module">
 import { openDB }             from './src/db.js';
-import { loadDespesas, cfg }  from './src/state.js';
+import { loadDespesas, cfg, setFSSaveHook, replaceDespesasQuiet, despesas, saveDespesasToStorage } from './src/state.js';
 import { loadCfg, saveCfg }   from './src/config.js';
 import { switchTab, renderAll, renderStorageInfo, toggleSelectionMode, toggleSelectAll, toggleItemSelection, deleteSelected } from './src/ui.js';
 import { setupDrop, handleFiles, removePending, updateNetPreview, saveDespesa, clearForm, editDespesa, deleteDespesa } from './src/form.js';
@@ -348,7 +348,8 @@ import { renderReembolsos } from './src/reembolsos.js';
 import { closeModal }         from './src/modal.js';
 import { today }              from './src/helpers.js';
 import { dbAll, dbDel }       from './src/db.js';
-import { replaceDespesas }    from './src/state.js';
+import { replaceDespesas, updateCfg } from './src/state.js';
+import { fsLoad, fsSave, fsListen } from './src/firebase.js';
 import { showModal, closeModal as closeM, toast } from './src/modal.js';
 
 // ── Boot ──────────────────────────────────────────────────────────────────────
@@ -368,6 +369,47 @@ if (['localhost', '127.0.0.1'].includes(location.hostname)) {
 // Auto-sync com a planilha: ao abrir e a cada 5 minutos
 runAutoSync(true);
 setInterval(() => runAutoSync(true), 5 * 60 * 1000);
+
+// ── Firebase Firestore – base compartilhada entre local e GitHub Pages ─────────
+setFSSaveHook((d, c) => fsSave(d, c));
+
+const fsData = await fsLoad();
+if (fsData?.despesas?.length) {
+  // Firestore tem dados → usa como fonte de verdade
+  replaceDespesasQuiet(fsData.despesas);
+  if (fsData.config) {
+    Object.assign(cfg, fsData.config);
+    localStorage.setItem('ir_config_v2', JSON.stringify(cfg));
+    loadCfg();
+  }
+} else if (despesas.length > 0) {
+  // Firestore vazio → faz upload dos dados locais
+  fsSave(despesas, cfg);
+}
+
+// Corrige duplicata Dra Priscila com data errada (one-time migration)
+{
+  const idx = despesas.findIndex(d =>
+    d.data === '2026-01-04' &&
+    (d.desc || '').includes('Priscila') &&
+    (d.attachmentIds || []).length === 0
+  );
+  if (idx !== -1) { despesas.splice(idx, 1); saveDespesasToStorage(); }
+}
+
+renderAll();
+
+// Escuta mudanças em tempo real de outros dispositivos
+fsListen(data => {
+  replaceDespesasQuiet(data.despesas);
+  if (data.config) {
+    Object.assign(cfg, data.config);
+    localStorage.setItem('ir_config_v2', JSON.stringify(cfg));
+    loadCfg();
+  }
+  renderAll();
+  toast('🔄 Dados atualizados');
+});
 
 // ── Expõe handlers para onclick inline (necessário com ES modules) ────────────
 window._toggleAttach        = toggleAttach;

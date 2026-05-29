@@ -25,7 +25,18 @@ export function loadDespesas() {
   }
 }
 
+// Hook chamado após cada save — usado pelo Firebase para sincronizar
+let _onSave = null;
+export function setFSSaveHook(fn) { _onSave = fn; }
+
 export function saveDespesasToStorage() {
+  localStorage.setItem(LS_DESP, JSON.stringify(despesas));
+  if (_onSave) _onSave(despesas, cfg);
+}
+
+/** Substitui despesas SEM disparar o hook do Firebase (usado ao receber dados remotos) */
+export function replaceDespesasQuiet(list) {
+  despesas = list;
   localStorage.setItem(LS_DESP, JSON.stringify(despesas));
 }
 
@@ -54,6 +65,7 @@ export function loadCfg() {
 
 export function saveCfgToStorage() {
   localStorage.setItem(LS_CFG, JSON.stringify(cfg));
+  if (_onSave) _onSave(despesas, cfg);
 }
 
 export function updateCfg(partial) {

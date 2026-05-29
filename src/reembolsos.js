@@ -12,6 +12,7 @@ const PLANO_NOMES = {
 // Para cada plano, qual é o plano "destino" da carta complementar
 const CARTA_DESTINO = {
   sa_kc:    'bradesco',
+  sa_part:  'bradesco',
   bradesco: 'sa_kc',
 };
 

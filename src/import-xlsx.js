@@ -268,7 +268,7 @@ export async function onSheetChange(file) {
       .filter(r => {
         const pago  = r[C.pagoPor]?.toString().trim();
         const valor = parseBRL(r[C.valor]);
-        return r[C.data] && pago !== 'Retorno' && valor > 0;
+        return r[C.data] && (valor > 0 || pago === 'Retorno');
       })
       .map((r, i) => {
         const medico = r[C.medico]?.toString().trim() || '';

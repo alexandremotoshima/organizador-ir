@@ -46,7 +46,7 @@ function parseBRL(v) {
 function detectDateFmt(dateValues) {
   for (const v of dateValues) {
     if (!v) continue;
-    const m = v.toString().match(/^(\d{1,2})\/(\d{1,2})\/\d{4}$/);
+    const m = v.toString().match(/(\d{1,2})\/(\d{1,2})\/\d{4}/);
     if (!m) continue;
     const a = parseInt(m[1]), b = parseInt(m[2]);
     if (a > 12) return 'DD/MM'; // 1º parte é dia com certeza
@@ -74,8 +74,8 @@ function parseDate(v, fmt = 'DD/MM') {
     return `${y}-${m}-${d}`;
   }
   const s = v.toString().trim();
-  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s; // já em ISO
-  const match = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0, 10); // já em ISO
+  const match = s.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);  // sem anchors: aceita hora no fim
   if (!match) return '';
   const [p1, p2, year] = [match[1], match[2], match[3]];
   const [dd, mm] = fmt === 'MM/DD' ? [p2, p1] : [p1, p2];
@@ -568,6 +568,7 @@ export async function syncSheet() {
       espec:    col('ESPECIALIDADE'),
       valor:    col('VALOR TOT', 'VALOR TOTAL'),
       pagoPor:  col('PAGO PO', 'PAGO POR'),
+      naoR:     col('NÃO REEM', 'NAO REEM', 'NÃO REEMB', 'NAO REEMB', 'NÃO REEMBOLSADO', 'NAO REEMBOLSADO'),
       bradSt:   col('BRADESCO', 'BRADESC'),
       saPartSt: col('SULAMERICA PA', 'SUL AMERICA PA', 'SULAM. PART', 'SULAMERICA PART', 'SA PART', 'SA_PART'),
       saKcSt:   col('SULAMERICA KC', 'SUL AMERICA KC', 'SULAM. KC', 'SA KC', 'SA_KC'),
@@ -578,6 +579,7 @@ export async function syncSheet() {
     C.bradVl   = nextValor(C.bradSt)   >= 0 ? nextValor(C.bradSt)   : col('VL BRAD',    'VALOR BRAD',    'BRADESCO VL');
     C.saPartVl = nextValor(C.saPartSt) >= 0 ? nextValor(C.saPartSt) : col('VL SA PART', 'VALOR SA PART', 'SULAM PART VL');
     C.saKcVl   = nextValor(C.saKcSt)  >= 0 ? nextValor(C.saKcSt)   : col('VL SA KC',   'VALOR SA KC',   'SULAM KC VL');
+    if (C.naoR < 0) C.naoR = hdrs.length - 1;
 
     const normRb = v => {
       const s = (v ?? '').toString().trim().toLowerCase();
@@ -603,7 +605,35 @@ export async function syncSheet() {
       const valor  = parseBRL(row[C.valor]);
 
       const d = despesas.find(x => x.data === date && x.valor === valor && x.desc === desc);
-      if (!d) { newCount++; continue; }
+      if (!d) {
+        if (!date) continue; // data inválida, pula
+        // Auto-adiciona linha nova da planilha
+        const pago  = row[C.pagoPor]?.toString().trim();
+        const naoR  = parseBRL(row[C.naoR]);
+        const maxId = despesas.reduce((m, x) => Math.max(m, x.id || 0), 0);
+        despesas.push({
+          id:            maxId + 1 + newCount,
+          desc,
+          categoria:     'saude',
+          beneficiario:  'filho',
+          pagador:       pago === 'Ale' ? 'titular' : pago === 'Dani' ? 'conjuge' : 'titular',
+          valor,
+          reembolso:     Math.max(0, valor - naoR),
+          reembolsos: [
+            { plano: 'bradesco', status: C.bradSt   >= 0 ? normRb(row[C.bradSt])   : 'na', valor: C.bradVl   >= 0 ? parseBRL(row[C.bradVl])   : 0 },
+            { plano: 'sa_part',  status: C.saPartSt >= 0 ? normRb(row[C.saPartSt]) : 'na', valor: C.saPartVl >= 0 ? parseBRL(row[C.saPartVl]) : 0 },
+            { plano: 'sa_kc',    status: C.saKcSt   >= 0 ? normRb(row[C.saKcSt])   : 'na', valor: C.saKcVl   >= 0 ? parseBRL(row[C.saKcVl])   : 0 },
+          ],
+          comprovante:   C.comprov >= 0 ? normBool(row[C.comprov]) : false,
+          notaFiscal:    C.nfiscal >= 0 ? normBool(row[C.nfiscal]) : false,
+          pedidoMedico:  C.pedido  >= 0 ? normBool(row[C.pedido])  : false,
+          data:          date,
+          obs:           '',
+          attachmentIds: [],
+        });
+        newCount++;
+        continue;
+      }
 
       let changed = false;
       if (C.comprov  >= 0) { const v = normBool(row[C.comprov]);  if (d.comprovante  !== v) { d.comprovante  = v; changed = true; } }
@@ -626,7 +656,7 @@ export async function syncSheet() {
       if (changed) updated++;
     }
 
-    if (updated > 0) saveDespesasToStorage();
+    if (updated > 0 || newCount > 0) saveDespesasToStorage();
     return { newCount, total: dataRows.length, updated };
   } catch (e) {
     return { error: e instanceof TypeError ? 'Bloqueio CORS — verifique o compartilhamento da planilha' : e.message };

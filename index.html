@@ -393,12 +393,12 @@ async function runAutoSync(silent = true) {
   }
 
   const parts = [];
+  if (result.newCount > 0) parts.push(`${result.newCount} adicionada${result.newCount !== 1 ? 's' : ''}`);
   if (result.updated  > 0) parts.push(`${result.updated} atualizada${result.updated !== 1 ? 's' : ''}`);
-  if (result.newCount > 0) parts.push(`${result.newCount} nova${result.newCount !== 1 ? 's' : ''} na planilha`);
 
   if (valEl) {
-    valEl.style.color = result.newCount > 0 ? 'var(--amber,#d97706)' : 'var(--teal)';
-    valEl.textContent = result.newCount > 0 ? `+${result.newCount} nova${result.newCount !== 1 ? 's' : ''}` : 'Em dia';
+    valEl.style.color = (result.newCount > 0 || result.updated > 0) ? 'var(--teal)' : 'var(--teal)';
+    valEl.textContent = 'Em dia';
   }
   if (subEl) { subEl.style.color = ''; subEl.textContent = parts.length ? parts.join(' · ') : `Tudo em dia · ${result.total} consultas`; }
 
@@ -406,10 +406,8 @@ async function runAutoSync(silent = true) {
     renderAll();
     if (!document.getElementById('tab-reembolsos').classList.contains('hidden'))
       import('./src/reembolsos.js').then(m => m.renderReembolsos());
-    if (result.newCount > 0)
-      toast(`📊 Planilha: ${result.newCount} nova${result.newCount !== 1 ? 's' : ''} consulta${result.newCount !== 1 ? 's' : ''} — abra "Importar planilha" para incluir`);
-    else if (result.updated > 0)
-      toast(`📊 Planilha: ${result.updated} despesa${result.updated !== 1 ? 's' : ''} atualizada${result.updated !== 1 ? 's' : ''} automaticamente`);
+    const msg = parts.join(' · ');
+    toast(`📊 Planilha: ${msg}`);
   }
 }
 

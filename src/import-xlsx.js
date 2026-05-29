@@ -283,6 +283,7 @@ export async function onSheetChange(file) {
         const normRb = (cellVal) => {
           const v = (cellVal ?? '').toString().trim().toLowerCase();
           if (v === 'solicitar' || v === 'a solicitar') return 'solicitar';
+          if (v === 'solicitado' || v === 'aguardando' || v === 'enviado') return 'solicitado';
           if (v === 'concluido' || v === 'concluído' || v === 'ok' || v === 'sim') return 'concluido';
           return 'na';
         };
@@ -584,6 +585,7 @@ export async function syncSheet() {
     const normRb = v => {
       const s = (v ?? '').toString().trim().toLowerCase();
       if (s === 'solicitar' || s === 'a solicitar') return 'solicitar';
+      if (s === 'solicitado' || s === 'aguardando' || s === 'enviado') return 'solicitado';
       if (s === 'concluido' || s === 'concluído' || s === 'ok' || s === 'sim') return 'concluido';
       return 'na';
     };

@@ -28,10 +28,6 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
       Importar planilha
     </button>
-    <button class="btn btn-sm" id="btn-sync" style="display:none" title="Abre o GitHub Pages com seus dados carregados">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
-      Sincronizar
-    </button>
     <button class="btn btn-sm btn-primary" id="btn-print">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
       Imprimir / PDF
@@ -347,7 +343,7 @@ import { renderDocs, toggleAttach, openLightbox, closeLightbox, dlCurrentLightbo
          toggleDocsSelMode, toggleDocsSelectAll, deleteSelectedDocs,
          openImportDocsOverlay, closeImportDocsOverlay, onDocsFilesChange, confirmDocsImport } from './src/docs.js';
 import { printReport }             from './src/print.js';
-import { exportJSON, importJSON, gerarLinkSync, checkSyncURL } from './src/io.js';
+import { exportJSON, importJSON } from './src/io.js';
 import { openImportOverlay, closeImportOverlay, onSheetChange, onFolderChange,
          confirmImport, fetchSheetFromUrl, syncSheet } from './src/import-xlsx.js';
 import { renderReembolsos }        from './src/reembolsos.js';
@@ -388,60 +384,17 @@ async function runAutoSync(silent = true) {
 
 // ── Boot ──────────────────────────────────────────────────────────────────────
 await openDB();
-loadDespesas();
-loadCfg();
 document.getElementById('f-data').value = today();
 setupDrop();
-renderAll();
 
-// Botão sincronizar visível só no localhost
-if (['localhost', '127.0.0.1'].includes(location.hostname)) {
-  document.getElementById('btn-sync').style.display = '';
-}
-
-// ── Firebase Firestore – base compartilhada entre local e GitHub Pages ─────────
+// ── Firestore – única fonte de dados ─────────────────────────────────────────
 setFSSaveHook((d, c) => fsSave(d, c));
 
 const fsData = await fsLoad();
 if (fsData?.despesas?.length) {
   replaceDespesasQuiet(fsData.despesas);
-  if (fsData.config) {
-    Object.assign(cfg, fsData.config);
-    localStorage.setItem('ir_config_v2', JSON.stringify(cfg));
-    loadCfg();
-  }
+  if (fsData.config) { Object.assign(cfg, fsData.config); loadCfg(); }
   if (fsData.irSync) localStorage.setItem('ir_sync', fsData.irSync);
-} else if (despesas.length > 0) {
-  fsSave(despesas, cfg);
-}
-
-// checkSyncURL após Firebase para que dados do URL hash persistam no Firestore
-checkSyncURL();
-
-// One-time migration: corrige datas com mês/dia invertidos (formato DD/MM vs MM/DD)
-{
-  const FIXES = {
-    '2026-04-02': '2026-02-04',
-    '2026-04-03': '2026-03-04',
-    '2026-01-04': '2026-04-01',
-    '2026-12-02': '2026-02-12',
-    '2026-10-04': '2026-04-10',
-  };
-  let fixed = false;
-  for (const d of despesas) {
-    if (FIXES[d.data]) { d.data = FIXES[d.data]; fixed = true; }
-  }
-  // Remove duplicatas após correção (mesma data+desc+valor)
-  const seen = new Set();
-  const dedup = despesas.filter(d => {
-    const k = `${d.data}|${d.desc}|${d.valor}`;
-    if (seen.has(k)) return false;
-    seen.add(k); return true;
-  });
-  if (fixed || dedup.length < despesas.length) {
-    despesas.length = 0; despesas.push(...dedup);
-    saveDespesasToStorage();
-  }
 }
 
 renderAll();
@@ -451,11 +404,7 @@ setInterval(() => runAutoSync(true), 5 * 60 * 1000);
 // Escuta mudanças em tempo real de outros dispositivos
 fsListen(data => {
   replaceDespesasQuiet(data.despesas);
-  if (data.config) {
-    Object.assign(cfg, data.config);
-    localStorage.setItem('ir_config_v2', JSON.stringify(cfg));
-    loadCfg();
-  }
+  if (data.config) { Object.assign(cfg, data.config); loadCfg(); }
   if (data.irSync) localStorage.setItem('ir_sync', data.irSync);
   renderAll();
   toast('🔄 Dados atualizados');
@@ -480,7 +429,6 @@ window._syncSheet = async function(btn) {
 // ── Event listeners — header ──────────────────────────────────────────────────
 document.getElementById('btn-export').addEventListener('click', exportJSON);
 document.getElementById('btn-import').addEventListener('change', importJSON);
-document.getElementById('btn-sync').addEventListener('click', gerarLinkSync);
 document.getElementById('btn-print').addEventListener('click', printReport);
 document.getElementById('btn-import-sheet').addEventListener('click', openImportOverlay);
 document.getElementById('btn-close-import').addEventListener('click', closeImportOverlay);

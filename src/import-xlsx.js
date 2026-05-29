@@ -39,7 +39,23 @@ function parseBRL(v) {
   return parseFloat(s) || 0;                     // "850.00" ou "850"
 }
 
-function parseDate(v) {
+// Detecta se o CSV usa MM/DD/YYYY ou DD/MM/YYYY lendo todas as datas da coluna.
+// Lógica: se alguma data tiver o 1º componente > 12, só pode ser DD/MM.
+//         se alguma tiver o 2º componente > 12, só pode ser MM/DD.
+//         se ambiguidade total, assume DD/MM (padrão brasileiro).
+function detectDateFmt(dateValues) {
+  for (const v of dateValues) {
+    if (!v) continue;
+    const m = v.toString().match(/^(\d{1,2})\/(\d{1,2})\/\d{4}$/);
+    if (!m) continue;
+    const a = parseInt(m[1]), b = parseInt(m[2]);
+    if (a > 12) return 'DD/MM'; // 1º parte é dia com certeza
+    if (b > 12) return 'MM/DD'; // 2º parte é dia → formato americano
+  }
+  return 'DD/MM'; // ambíguo → padrão BR
+}
+
+function parseDate(v, fmt = 'DD/MM') {
   if (!v) return '';
   if (v instanceof Date) {
     // Usa UTC para evitar que timezone negativa (ex: UTC-3) vire o dia anterior
@@ -50,16 +66,20 @@ function parseDate(v) {
   }
   if (typeof v === 'number') {
     // Serial do Excel: dias desde 1900-01-01 (25569 = diferença até 1970-01-01)
-    const ms  = Math.round((v - 25569) * 86400 * 1000);
-    const dt  = new Date(ms);
-    const y   = dt.getUTCFullYear();
-    const m   = String(dt.getUTCMonth() + 1).padStart(2, '0');
-    const d   = String(dt.getUTCDate()).padStart(2, '0');
+    const ms = Math.round((v - 25569) * 86400 * 1000);
+    const dt = new Date(ms);
+    const y  = dt.getUTCFullYear();
+    const m  = String(dt.getUTCMonth() + 1).padStart(2, '0');
+    const d  = String(dt.getUTCDate()).padStart(2, '0');
     return `${y}-${m}-${d}`;
   }
-  const s = v.toString();
-  const match = s.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
-  return match ? `${match[3]}-${match[2].padStart(2,'0')}-${match[1].padStart(2,'0')}` : '';
+  const s = v.toString().trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s; // já em ISO
+  const match = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (!match) return '';
+  const [p1, p2, year] = [match[1], match[2], match[3]];
+  const [dd, mm] = fmt === 'MM/DD' ? [p2, p1] : [p1, p2];
+  return `${year}-${mm.padStart(2,'0')}-${dd.padStart(2,'0')}`;
 }
 
 function normBool(v) {
@@ -242,6 +262,8 @@ export async function onSheetChange(file) {
       throw new Error(`Colunas não encontradas. Cabeçalhos lidos: ${hdrs.join(' | ')}`);
     }
 
+    const dateFmt = detectDateFmt(rows.slice(headerIdx + 1).map(r => r[C.data]));
+
     _parsed = rows.slice(headerIdx + 1)
       .filter(r => {
         const pago  = r[C.pagoPor]?.toString().trim();
@@ -254,7 +276,7 @@ export async function onSheetChange(file) {
         const pago   = r[C.pagoPor]?.toString().trim();
         const valor  = parseBRL(r[C.valor]);
         const naoR   = parseBRL(r[C.naoR]);
-        const date    = parseDate(r[C.data]);
+        const date    = parseDate(r[C.data], dateFmt);
         const rawDate = date
           ? `${date.slice(8,10)}/${date.slice(5,7)}/${date.slice(0,4)}`
           : String(r[C.data] ?? '').trim();
@@ -564,6 +586,8 @@ export async function syncSheet() {
       return 'na';
     };
 
+    const dateFmt = detectDateFmt(rows.slice(headerIdx + 1).map(r => r[C.data]));
+
     let newCount = 0, updated = 0;
     const dataRows = rows.slice(headerIdx + 1).filter(r => {
       const pago  = r[C.pagoPor]?.toString().trim();
@@ -572,7 +596,7 @@ export async function syncSheet() {
     });
 
     for (const row of dataRows) {
-      const date   = parseDate(row[C.data]);
+      const date   = parseDate(row[C.data], dateFmt);
       const medico = row[C.medico]?.toString().trim() || '';
       const espec  = row[C.espec]?.toString().trim()  || '';
       const desc   = medico + (espec ? ` – ${espec}` : '');

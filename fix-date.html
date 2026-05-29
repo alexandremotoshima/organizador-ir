@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head><meta charset="UTF-8"><title>Corrigindo duplicata…</title></head>
+<body>
+<pre id="out"></pre>
+<script>
+  try {
+    const raw = localStorage.getItem('ir_despesas_v3');
+    if (!raw) throw new Error('ir_despesas_v3 não encontrado');
+    const despesas = JSON.parse(raw);
+
+    // Remove o duplicado errado: Priscila, data 2026-01-04, sem anexos (adicionado pelo auto-sync)
+    const antes = despesas.length;
+    const filtrado = despesas.filter(d =>
+      !(d.data === '2026-01-04' &&
+        (d.desc || '').includes('Priscila') &&
+        (d.attachmentIds || []).length === 0)
+    );
+
+    if (filtrado.length === antes) {
+      document.getElementById('out').textContent = '⚠️ Registro duplicado não encontrado (pode já ter sido corrigido).';
+    } else {
+      localStorage.setItem('ir_despesas_v3', JSON.stringify(filtrado));
+      document.getElementById('out').textContent =
+        `✅ Removido ${antes - filtrado.length} registro duplicado. Redirecionando…`;
+    }
+  } catch(e) {
+    document.getElementById('out').textContent = '❌ Erro: ' + e.message;
+  }
+  setTimeout(() => { window.location.href = '/organizador-ir/'; }, 1500);
+</script>
+</body>
+</html>

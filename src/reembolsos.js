@@ -1,6 +1,19 @@
 // ── Aba Reembolsos ────────────────────────────────────────────────────────────
-import { despesas, saveDespesasToStorage } from './state.js';
+import { despesas, cfg, saveDespesasToStorage } from './state.js';
 import { brl, fmtDate, escH } from './helpers.js';
+
+// ── Carta de reembolso complementar ──────────────────────────────────────────
+const PLANO_NOMES = {
+  bradesco: 'Bradesco Saúde',
+  sa_kc:    'Sulamérica Saúde (KC)',
+  sa_part:  'Sulamérica Saúde (PART)',
+};
+
+// Para cada plano, qual é o plano "destino" da carta complementar
+const CARTA_DESTINO = {
+  sa_kc:    'bradesco',
+  bradesco: 'sa_kc',
+};
 
 export const PLANOS = [
   { key: 'bradesco', label: 'Bradesco',  sub: 'Ale',  badge: 'b-tit'  },
@@ -158,6 +171,8 @@ export function renderReembolsos() {
       const opts = Object.entries(STATUS).map(([k, v]) =>
         `<option value="${k}" ${r.status === k ? 'selected' : ''}>${v.label}</option>`
       ).join('');
+      const showCarta = CARTA_DESTINO[p.key] && r.status === 'concluido' && r.valor > 0;
+      const destLabel = showCarta ? PLANO_NOMES[CARTA_DESTINO[p.key]] : '';
       return `<td class="rb-cell">
         <select class="rb-status-select ${cls}"
           onchange="window._rbSetStatus(${d.id},'${p.key}',this.value)">
@@ -167,6 +182,10 @@ export function renderReembolsos() {
           ? `<input type="number" class="rb-valor-input" value="${r.valor || ''}"
                step="0.01" min="0" placeholder="0,00"
                onchange="window._rbSetValor(${d.id},'${p.key}',this.value)">`
+          : ''}
+        ${showCarta
+          ? `<button class="rb-carta-btn" title="Gerar carta de reembolso complementar para ${destLabel}"
+               onclick="window._rbGerarCarta(${d.id},'${p.key}')">📄 Carta</button>`
           : ''}
       </td>`;
     }).join('');
@@ -218,4 +237,75 @@ window._rbSetDoc = function(expId, field, checked) {
   if (!d) return;
   d[field] = checked;
   saveDespesasToStorage();
+};
+
+window._rbGerarCarta = function(expId, planoReembolsante) {
+  const d = despesas.find(x => x.id === expId);
+  if (!d) return;
+  const r = (d.reembolsos || []).find(x => x.plano === planoReembolsante);
+  if (!r || !r.valor) return;
+
+  const planoDestKey   = CARTA_DESTINO[planoReembolsante];
+  const planoPagouNome = PLANO_NOMES[planoReembolsante];
+  const planoDestNome  = PLANO_NOMES[planoDestKey];
+  const dataHoje       = new Date().toLocaleDateString('pt-BR');
+  const dataConsulta   = fmtDate(d.data);
+  const valorTotal     = brl(d.valor);
+  const valorReemb     = brl(r.valor);
+  const beneficiario   = escH(cfg.filho);
+  const titular        = escH(cfg.titular);
+  const descricao      = escH(d.desc.charAt(0).toLowerCase() + d.desc.slice(1));
+
+  const html = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Solicitação de Reembolso Complementar</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:Arial,sans-serif;max-width:720px;margin:60px auto;color:#222;line-height:1.85;font-size:14px}
+    .date{text-align:right;color:#666;margin-bottom:1.8rem;font-size:13px}
+    .addressee{margin-bottom:.4rem;font-weight:700}
+    .subject{margin-bottom:2rem;font-weight:700}
+    p{margin-bottom:1.2rem;text-align:justify}
+    ul{margin:.4rem 0 1.2rem 2rem}
+    li{margin-bottom:.4rem}
+    .sig{margin-top:4rem}
+    .btn{display:block;margin:2.5rem auto 0;padding:10px 28px;font-size:14px;background:#1a7a5e;color:#fff;border:none;border-radius:6px;cursor:pointer;font-family:Arial,sans-serif}
+    .btn:hover{background:#155f49}
+    @media print{.btn{display:none}body{margin:30px}}
+  </style>
+</head>
+<body>
+  <p class="date">${dataHoje}</p>
+  <p class="addressee">A/C: ${planoDestNome}</p>
+  <p class="subject">Assunto: Solicitação de reembolso complementar – Coordenação de benefícios</p>
+
+  <p>Solicito reembolso complementar referente à ${descricao} realizada pelo beneficiário <strong>${beneficiario}</strong>, em <strong>${dataConsulta}</strong>, no valor total de <strong>${valorTotal}</strong>.</p>
+
+  <p>Informo que o atendimento foi inicialmente submetido ao plano <strong>${planoPagouNome}</strong>, que efetuou reembolso parcial no valor de <strong>${valorReemb}</strong>, conforme demonstrativo anexado.</p>
+
+  <p>Dessa forma, solicito a análise do reembolso complementar referente ao valor remanescente não ressarcido, conforme regras de coordenação de benefícios entre operadoras.</p>
+
+  <p><strong>Documentos anexos:</strong></p>
+  <ul>
+    <li>Nota fiscal/recibo</li>
+    <li>Comprovante de pagamento</li>
+    <li>Demonstrativo de reembolso do ${planoPagouNome}</li>
+  </ul>
+
+  <div class="sig">
+    <p>Atenciosamente,</p>
+    <p style="margin-top:3rem">___________________________________</p>
+    <p>${titular}</p>
+  </div>
+
+  <button class="btn" onclick="window.print()">Imprimir / Salvar como PDF</button>
+</body>
+</html>`;
+
+  const win = window.open('', '_blank');
+  if (!win) { alert('Permita pop-ups para gerar a carta.'); return; }
+  win.document.write(html);
+  win.document.close();
 };

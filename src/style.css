@@ -183,3 +183,5 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:15
 .rb-concluido{background:var(--teal-l);color:var(--teal);border-color:#7dd3b8}
 .rb-na{background:var(--bg);color:var(--muted)}
 .rb-valor-input{width:100%;margin-top:4px;font-size:12px;padding:3px 6px;border:1px solid var(--border);border-radius:var(--r);font-family:var(--font)}
+.rb-carta-btn{display:block;width:100%;margin-top:5px;padding:3px 6px;font-size:11px;background:var(--teal-l);color:var(--teal);border:1px solid var(--teal);border-radius:var(--r);cursor:pointer;font-family:var(--font);text-align:center}
+.rb-carta-btn:hover{background:var(--teal);color:#fff}

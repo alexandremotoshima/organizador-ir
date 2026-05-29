@@ -1,0 +1,20 @@
+{
+  "name": "ir-saude-educacao",
+  "version": "1.0.0",
+  "description": "Organizador de despesas dedutíveis de IR — Saúde & Educação",
+  "private": true,
+  "scripts": {
+    "dev": "npx live-server --port=3000 --open=index.html",
+    "open": "open index.html || xdg-open index.html || start index.html"
+  },
+  "keywords": [
+    "irpf",
+    "imposto-renda",
+    "saude",
+    "educacao"
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "playwright": "^1.60.0"
+  }
+}

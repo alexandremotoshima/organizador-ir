@@ -418,14 +418,30 @@ if (fsData?.despesas?.length) {
 // checkSyncURL após Firebase para que dados do URL hash persistam no Firestore
 checkSyncURL();
 
-// One-time migration: remove duplicata Dra Priscila com data errada
+// One-time migration: corrige datas com mês/dia invertidos (formato DD/MM vs MM/DD)
 {
-  const idx = despesas.findIndex(d =>
-    d.data === '2026-01-04' &&
-    (d.desc || '').includes('Priscila') &&
-    (d.attachmentIds || []).length === 0
-  );
-  if (idx !== -1) { despesas.splice(idx, 1); saveDespesasToStorage(); }
+  const FIXES = {
+    '2026-04-02': '2026-02-04',
+    '2026-04-03': '2026-03-04',
+    '2026-01-04': '2026-04-01',
+    '2026-12-02': '2026-02-12',
+    '2026-10-04': '2026-04-10',
+  };
+  let fixed = false;
+  for (const d of despesas) {
+    if (FIXES[d.data]) { d.data = FIXES[d.data]; fixed = true; }
+  }
+  // Remove duplicatas após correção (mesma data+desc+valor)
+  const seen = new Set();
+  const dedup = despesas.filter(d => {
+    const k = `${d.data}|${d.desc}|${d.valor}`;
+    if (seen.has(k)) return false;
+    seen.add(k); return true;
+  });
+  if (fixed || dedup.length < despesas.length) {
+    despesas.length = 0; despesas.push(...dedup);
+    saveDespesasToStorage();
+  }
 }
 
 renderAll();

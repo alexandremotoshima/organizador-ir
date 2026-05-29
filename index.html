@@ -335,22 +335,56 @@
 
 <!-- ── Bootstrap (ES modules) ───────────────────────────────────────────────── -->
 <script type="module">
-import { openDB }             from './src/db.js';
-import { loadDespesas, cfg, setFSSaveHook, replaceDespesasQuiet, despesas, saveDespesasToStorage } from './src/state.js';
-import { loadCfg, saveCfg }   from './src/config.js';
-import { switchTab, renderAll, renderStorageInfo, toggleSelectionMode, toggleSelectAll, toggleItemSelection, deleteSelected } from './src/ui.js';
-import { setupDrop, handleFiles, removePending, updateNetPreview, saveDespesa, clearForm, editDespesa, deleteDespesa } from './src/form.js';
-import { renderDocs, toggleAttach, openLightbox, closeLightbox, dlCurrentLightbox, dlFile, toggleDocsSelMode, toggleDocsSelectAll, deleteSelectedDocs, openImportDocsOverlay, closeImportDocsOverlay, onDocsFilesChange, confirmDocsImport } from './src/docs.js';
-import { printReport }        from './src/print.js';
+import { openDB, dbAll, dbDel }    from './src/db.js';
+import { loadDespesas, cfg, setFSSaveHook, replaceDespesasQuiet, replaceDespesas,
+         updateCfg, despesas, saveDespesasToStorage } from './src/state.js';
+import { loadCfg, saveCfg }        from './src/config.js';
+import { switchTab, renderAll, renderStorageInfo, toggleSelectionMode, toggleSelectAll,
+         toggleItemSelection, deleteSelected } from './src/ui.js';
+import { setupDrop, handleFiles, removePending, updateNetPreview, saveDespesa,
+         clearForm, editDespesa, deleteDespesa } from './src/form.js';
+import { renderDocs, toggleAttach, openLightbox, closeLightbox, dlCurrentLightbox, dlFile,
+         toggleDocsSelMode, toggleDocsSelectAll, deleteSelectedDocs,
+         openImportDocsOverlay, closeImportDocsOverlay, onDocsFilesChange, confirmDocsImport } from './src/docs.js';
+import { printReport }             from './src/print.js';
 import { exportJSON, importJSON, gerarLinkSync, checkSyncURL } from './src/io.js';
-import { openImportOverlay, closeImportOverlay, onSheetChange, onFolderChange, confirmImport, fetchSheetFromUrl, syncSheet } from './src/import-xlsx.js';
-import { renderReembolsos } from './src/reembolsos.js';
-import { closeModal }         from './src/modal.js';
-import { today }              from './src/helpers.js';
-import { dbAll, dbDel }       from './src/db.js';
-import { replaceDespesas, updateCfg } from './src/state.js';
+import { openImportOverlay, closeImportOverlay, onSheetChange, onFolderChange,
+         confirmImport, fetchSheetFromUrl, syncSheet } from './src/import-xlsx.js';
+import { renderReembolsos }        from './src/reembolsos.js';
+import { showModal, closeModal, toast } from './src/modal.js';
+import { today }                   from './src/helpers.js';
 import { fsLoad, fsSave, fsListen } from './src/firebase.js';
-import { showModal, closeModal as closeM, toast } from './src/modal.js';
+const closeM = closeModal;
+
+// ── Auto-sync com a planilha ──────────────────────────────────────────────────
+async function runAutoSync(silent = true) {
+  const raw = localStorage.getItem('ir_sync');
+  if (!raw) return;
+  try { if (!JSON.parse(raw).url) return; } catch { return; }
+
+  const valEl = document.getElementById('sync-status-val');
+  const subEl = document.getElementById('sync-status-sub');
+  const result = await syncSheet();
+
+  if (result.error) {
+    if (!silent && subEl) { subEl.textContent = result.error; subEl.style.color = 'var(--red,#e53e3e)'; }
+    return;
+  }
+
+  const parts = [];
+  if (result.newCount > 0) parts.push(`${result.newCount} adicionada${result.newCount !== 1 ? 's' : ''}`);
+  if (result.updated  > 0) parts.push(`${result.updated} atualizada${result.updated !== 1 ? 's' : ''}`);
+
+  if (valEl) { valEl.style.color = 'var(--teal)'; valEl.textContent = 'Em dia'; }
+  if (subEl) { subEl.style.color = ''; subEl.textContent = parts.length ? parts.join(' · ') : `Tudo em dia · ${result.total} consultas`; }
+
+  if (result.updated > 0 || result.newCount > 0) {
+    renderAll();
+    if (!document.getElementById('tab-reembolsos').classList.contains('hidden'))
+      import('./src/reembolsos.js').then(m => m.renderReembolsos());
+    toast(`📊 Planilha: ${parts.join(' · ')}`);
+  }
+}
 
 // ── Boot ──────────────────────────────────────────────────────────────────────
 await openDB();
@@ -359,7 +393,6 @@ loadCfg();
 document.getElementById('f-data').value = today();
 setupDrop();
 renderAll();
-checkSyncURL();
 
 // Botão sincronizar visível só no localhost
 if (['localhost', '127.0.0.1'].includes(location.hostname)) {
@@ -371,21 +404,21 @@ setFSSaveHook((d, c) => fsSave(d, c));
 
 const fsData = await fsLoad();
 if (fsData?.despesas?.length) {
-  // Firestore tem dados → usa como fonte de verdade
   replaceDespesasQuiet(fsData.despesas);
   if (fsData.config) {
     Object.assign(cfg, fsData.config);
     localStorage.setItem('ir_config_v2', JSON.stringify(cfg));
     loadCfg();
   }
-  // Restaura URL da planilha para que o auto-sync funcione neste dispositivo
   if (fsData.irSync) localStorage.setItem('ir_sync', fsData.irSync);
 } else if (despesas.length > 0) {
-  // Firestore vazio → faz upload dos dados locais (inclui ir_sync)
   fsSave(despesas, cfg);
 }
 
-// Corrige duplicata Dra Priscila com data errada (one-time migration)
+// checkSyncURL após Firebase para que dados do URL hash persistam no Firestore
+checkSyncURL();
+
+// One-time migration: remove duplicata Dra Priscila com data errada
 {
   const idx = despesas.findIndex(d =>
     d.data === '2026-01-04' &&
@@ -396,8 +429,6 @@ if (fsData?.despesas?.length) {
 }
 
 renderAll();
-
-// Auto-sync com a planilha APÓS carregar Firestore (garante que ir_sync está disponível)
 runAutoSync(true);
 setInterval(() => runAutoSync(true), 5 * 60 * 1000);
 
@@ -422,40 +453,6 @@ window._openLightbox        = openLightbox;
 window._rmPending           = removePending;
 window._dlFile              = dlFile;
 window._toggleItemSelection = toggleItemSelection;
-async function runAutoSync(silent = true) {
-  const raw = localStorage.getItem('ir_sync');
-  if (!raw) return;
-  try { if (!JSON.parse(raw).url) return; } catch { return; }
-
-  const valEl = document.getElementById('sync-status-val');
-  const subEl = document.getElementById('sync-status-sub');
-
-  const result = await syncSheet();
-
-  if (result.error) {
-    if (!silent && subEl) { subEl.textContent = result.error; subEl.style.color = 'var(--red,#e53e3e)'; }
-    return;
-  }
-
-  const parts = [];
-  if (result.newCount > 0) parts.push(`${result.newCount} adicionada${result.newCount !== 1 ? 's' : ''}`);
-  if (result.updated  > 0) parts.push(`${result.updated} atualizada${result.updated !== 1 ? 's' : ''}`);
-
-  if (valEl) {
-    valEl.style.color = (result.newCount > 0 || result.updated > 0) ? 'var(--teal)' : 'var(--teal)';
-    valEl.textContent = 'Em dia';
-  }
-  if (subEl) { subEl.style.color = ''; subEl.textContent = parts.length ? parts.join(' · ') : `Tudo em dia · ${result.total} consultas`; }
-
-  if (result.updated > 0 || result.newCount > 0) {
-    renderAll();
-    if (!document.getElementById('tab-reembolsos').classList.contains('hidden'))
-      import('./src/reembolsos.js').then(m => m.renderReembolsos());
-    const msg = parts.join(' · ');
-    toast(`📊 Planilha: ${msg}`);
-  }
-}
-
 window._syncSheet = async function(btn) {
   btn.disabled    = true;
   btn.textContent = 'Sincronizando…';

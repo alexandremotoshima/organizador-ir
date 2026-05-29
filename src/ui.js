@@ -74,6 +74,7 @@ export function switchTab(id) {
   document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active'));
   document.getElementById('tab-' + id).classList.remove('hidden');
   document.querySelector(`[data-tab="${id}"]`).classList.add('active');
+  document.querySelector('.main').classList.toggle('main--wide', id === 'reembolsos');
 
   if (id === 'dashboard')   renderDashboard();
   if (id === 'despesas')    renderDespesas();

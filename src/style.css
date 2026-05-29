@@ -19,6 +19,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:15
 .nav-tab:hover{color:var(--text)}.nav-tab.active{color:var(--teal);border-bottom-color:var(--teal);font-weight:500}
 .nav-tab svg{width:15px;height:15px}
 .main{max-width:920px;margin:0 auto;padding:1.5rem}
+.main--wide{max-width:1400px}
 .card{background:var(--white);border:1px solid var(--border);border-radius:var(--rl);padding:1.25rem 1.5rem;box-shadow:var(--shadow)}
 .card+.card{margin-top:1rem}
 .metric-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:11px;margin-bottom:1.25rem}

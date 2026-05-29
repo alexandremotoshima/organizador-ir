@@ -6,6 +6,18 @@ import { loadCfg } from './config.js';
 import { renderAll } from './ui.js';
 import { toast } from './modal.js';
 
+const PAGES_URL = 'https://alexandremotoshima.github.io/organizador-ir/';
+
+function encodeB64(str) {
+  return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g,
+    (_, p) => String.fromCharCode(parseInt(p, 16))));
+}
+
+function decodeB64(b64) {
+  return decodeURIComponent(atob(b64).split('').map(
+    c => '%' + c.charCodeAt(0).toString(16).padStart(2, '0')).join(''));
+}
+
 export async function exportJSON() {
   const allFiles = await dbAll();
   const payload  = {
@@ -21,6 +33,31 @@ export async function exportJSON() {
   a.download = `ir-backup-${cfg.ano || '2024'}-${today()}.json`;
   a.click();
   toast('Backup exportado (inclui anexos)!');
+}
+
+// ── Sync via URL hash ─────────────────────────────────────────────────────────
+export function gerarLinkSync() {
+  const payload = { version: 3, syncAt: new Date().toISOString(), config: cfg, despesas };
+  const encoded = encodeB64(JSON.stringify(payload));
+  const url     = `${PAGES_URL}#sync=${encoded}`;
+  window.open(url, '_blank');
+  toast('Abrindo GitHub Pages para sincronizar…');
+}
+
+export function checkSyncURL() {
+  const hash = window.location.hash;
+  if (!hash.startsWith('#sync=')) return;
+  try {
+    const data = JSON.parse(decodeB64(hash.slice(6)));
+    if (!data.despesas) return;
+    replaceDespesas(data.despesas);
+    if (data.config) { updateCfg(data.config); loadCfg(); }
+    renderAll();
+    history.replaceState(null, null, window.location.pathname);
+    toast(`✓ ${data.despesas.length} despesas sincronizadas do app local!`);
+  } catch (e) {
+    console.warn('Sync URL inválida:', e);
+  }
 }
 
 export function importJSON(evt) {

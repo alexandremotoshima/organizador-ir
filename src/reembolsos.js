@@ -294,12 +294,6 @@ window._rbGerarCarta = function(expId, planoReembolsante) {
     <li>Demonstrativo de reembolso do ${planoPagouNome}</li>
   </ul>
 
-  <div class="sig">
-    <p>Atenciosamente,</p>
-    <p style="margin-top:3rem">___________________________________</p>
-    <p>${titular}</p>
-  </div>
-
   <button class="btn" onclick="window.print()">Imprimir / Salvar como PDF</button>
 </body>
 </html>`;

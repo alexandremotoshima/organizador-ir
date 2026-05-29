@@ -39,20 +39,22 @@ function parseBRL(v) {
   return parseFloat(s) || 0;                     // "850.00" ou "850"
 }
 
-// Detecta se o CSV usa MM/DD/YYYY ou DD/MM/YYYY lendo todas as datas da coluna.
-// Lógica: se alguma data tiver o 1º componente > 12, só pode ser DD/MM.
-//         se alguma tiver o 2º componente > 12, só pode ser MM/DD.
-//         se ambiguidade total, assume DD/MM (padrão brasileiro).
+// Detecta se o CSV usa MM/DD/YYYY ou DD/MM/YYYY varrendo TODAS as datas.
+// Conta evidências de cada formato e usa o mais forte — assim datas ambíguas
+// (ambos os componentes ≤ 12) seguem o mesmo padrão das não-ambíguas.
 function detectDateFmt(dateValues) {
+  let ddmm = 0, mmdd = 0;
   for (const v of dateValues) {
     if (!v) continue;
     const m = v.toString().match(/(\d{1,2})\/(\d{1,2})\/\d{4}/);
     if (!m) continue;
     const a = parseInt(m[1]), b = parseInt(m[2]);
-    if (a > 12) return 'DD/MM'; // 1º parte é dia com certeza
-    if (b > 12) return 'MM/DD'; // 2º parte é dia → formato americano
+    if (a > 12) ddmm++; // 1º parte > 12 → só pode ser dia → DD/MM
+    if (b > 12) mmdd++; // 2º parte > 12 → só pode ser dia → MM/DD
   }
-  return 'DD/MM'; // ambíguo → padrão BR
+  if (mmdd > ddmm) return 'MM/DD';
+  if (ddmm > 0)    return 'DD/MM';
+  return 'DD/MM'; // tudo ambíguo → padrão BR
 }
 
 function parseDate(v, fmt = 'DD/MM') {

@@ -240,8 +240,10 @@ export async function onSheetChange(file) {
     const nextValor = (stIdx) =>
       (stIdx >= 0 && (hdrs[stIdx + 1] || '').includes('VALOR')) ? stIdx + 1 : -1;
 
+    // Prefere coluna DATA MM/DD/YYYY (correlação com diretórios MM.DD) se existir
+    const dataMmDdIdx = hdrs.findIndex(h => h.includes('DATA MM/DD'));
     const C = {
-      data:     col('DATA'),
+      data:     dataMmDdIdx >= 0 ? dataMmDdIdx : col('DATA'),
       medico:   col('MÉDICO', 'MEDICO'),
       espec:    col('ESPECIALIDADE'),
       valor:    col('VALOR TOT', 'VALOR TOTAL'),
@@ -264,7 +266,9 @@ export async function onSheetChange(file) {
       throw new Error(`Colunas não encontradas. Cabeçalhos lidos: ${hdrs.join(' | ')}`);
     }
 
-    const dateFmt = detectDateFmt(rows.slice(headerIdx + 1).map(r => r[C.data]));
+    // Se existe coluna DATA MM/DD, o formato é sempre MM/DD (sem auto-detect)
+    const dateFmt = dataMmDdIdx >= 0 ? 'MM/DD'
+      : detectDateFmt(rows.slice(headerIdx + 1).map(r => r[C.data]));
 
     _parsed = rows.slice(headerIdx + 1)
       .filter(r => {
@@ -565,8 +569,10 @@ export async function syncSheet() {
     const nextValor = (stIdx) =>
       (stIdx >= 0 && (hdrs[stIdx + 1] || '').includes('VALOR')) ? stIdx + 1 : -1;
 
+    // Prefere coluna DATA MM/DD/YYYY (correlação com diretórios MM.DD) se existir
+    const dataMmDdIdx = hdrs.findIndex(h => h.includes('DATA MM/DD'));
     const C = {
-      data:     col('DATA'),
+      data:     dataMmDdIdx >= 0 ? dataMmDdIdx : col('DATA'),
       medico:   col('MÉDICO', 'MEDICO'),
       espec:    col('ESPECIALIDADE'),
       valor:    col('VALOR TOT', 'VALOR TOTAL'),
@@ -592,13 +598,14 @@ export async function syncSheet() {
       return 'na';
     };
 
-    const dateFmt = detectDateFmt(rows.slice(headerIdx + 1).map(r => r[C.data]));
+    const dateFmt = dataMmDdIdx >= 0 ? 'MM/DD'
+      : detectDateFmt(rows.slice(headerIdx + 1).map(r => r[C.data]));
 
     let newCount = 0, updated = 0;
     const dataRows = rows.slice(headerIdx + 1).filter(r => {
       const pago  = r[C.pagoPor]?.toString().trim();
       const valor = parseBRL(r[C.valor]);
-      return r[C.data] && pago !== 'Retorno' && valor > 0;
+      return r[C.data] && (valor > 0 || pago === 'Retorno');
     });
 
     for (const row of dataRows) {

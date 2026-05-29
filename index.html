@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Organizador IR – Saúde & Educação</title>
+<link rel="stylesheet" href="src/style.css">
+</head>
+<body>
+
+<!-- ── Header ──────────────────────────────────────────────────────────────── -->
+<header class="app-header no-print">
+  <div class="logo">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12h6m-3-3v6M3 12a9 9 0 1 0 18 0 9 9 0 0 0-18 0"/></svg>
+    Organizador IR – Saúde &amp; Educação
+  </div>
+  <div class="header-actions">
+    <button class="btn btn-sm" id="btn-export">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Exportar JSON
+    </button>
+    <label class="btn btn-sm" style="cursor:pointer">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10" transform="rotate(180 12 12)"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      Importar JSON
+      <input type="file" id="btn-import" accept=".json" style="display:none">
+    </label>
+    <button class="btn btn-sm" id="btn-import-sheet">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+      Importar planilha
+    </button>
+    <button class="btn btn-sm btn-primary" id="btn-print">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+      Imprimir / PDF
+    </button>
+  </div>
+</header>
+
+<!-- ── Nav Tabs ─────────────────────────────────────────────────────────────── -->
+<nav class="nav-tabs no-print">
+  <button class="nav-tab active" data-tab="dashboard">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+    Painel
+  </button>
+  <button class="nav-tab" data-tab="despesas">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><circle cx="3" cy="6" r="1" fill="currentColor"/><circle cx="3" cy="12" r="1" fill="currentColor"/><circle cx="3" cy="18" r="1" fill="currentColor"/></svg>
+    Despesas
+  </button>
+  <button class="nav-tab" data-tab="adicionar">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+    Adicionar
+  </button>
+  <button class="nav-tab" data-tab="documentos">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+    Documentos
+  </button>
+  <button class="nav-tab" data-tab="resumo">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+    Resumo IR
+  </button>
+  <button class="nav-tab" data-tab="reembolsos">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/><path d="M15 9H9v2h6V9zm0 4H9v2h6v-2z"/></svg>
+    Reembolsos
+  </button>
+  <button class="nav-tab" data-tab="config">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    Config
+  </button>
+</nav>
+
+<main class="main">
+
+  <!-- Painel -->
+  <section id="tab-dashboard" class="tab-content">
+    <div class="metric-grid" id="metric-grid"></div>
+    <div id="dashboard-alert" class="mb-2 hidden"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem" id="person-cards"></div>
+  </section>
+
+  <!-- Despesas -->
+  <section id="tab-despesas" class="tab-content hidden">
+    <div class="filters">
+      <select id="ff-cat"><option value="">Todas as categorias</option><option value="saude">Saúde</option><option value="educacao">Educação</option></select>
+      <select id="ff-pag"><option value="">Todos os pagadores</option><option value="titular">Ale</option><option value="conjuge">Dani</option></select>
+      <select id="ff-ben"><option value="">Todos os beneficiários</option><option value="titular">Ale</option><option value="conjuge">Dani</option><option value="filho">Filho/a</option></select>
+      <select id="ff-sort">
+        <option value="data-desc">Data ↓</option>
+        <option value="data-asc">Data ↑</option>
+        <option value="valor-desc">Valor ↓</option>
+        <option value="valor-asc">Valor ↑</option>
+        <option value="desc-asc">Descrição A–Z</option>
+        <option value="pagador-asc">Pagador</option>
+        <option value="categoria-asc">Categoria</option>
+      </select>
+      <span class="filters-right" id="filter-summary"></span>
+      <button class="btn btn-sm" id="btn-select-mode">Selecionar</button>
+      <button class="btn btn-sm hidden" id="btn-select-all">Todos</button>
+      <button class="btn btn-sm btn-danger hidden" id="btn-delete-selected" disabled>Excluir (0)</button>
+    </div>
+    <div class="card" id="despesas-list"></div>
+  </section>
+
+  <!-- Adicionar -->
+  <section id="tab-adicionar" class="tab-content hidden">
+    <div class="card" style="max-width:560px">
+      <h2 style="font-size:16px;margin-bottom:1.1rem">Nova despesa</h2>
+      <div id="form-success" class="alert alert-success mb-2 hidden">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+        Despesa salva!
+      </div>
+      <div class="form-grid">
+        <div class="field full"><label>Descrição *</label><input type="text" id="f-desc" placeholder="Ex: Plano de saúde familiar, Mensalidade colégio…"/></div>
+        <div class="field"><label>Categoria *</label><select id="f-cat"><option value="saude">Saúde</option><option value="educacao">Educação</option></select></div>
+        <div class="field"><label>Data</label><input type="date" id="f-data"/></div>
+        <div class="field"><label>Quem pagou *</label><select id="f-pag"><option value="titular">Ale</option><option value="conjuge">Dani</option></select></div>
+        <div class="field"><label>Beneficiário</label><select id="f-ben"><option value="filho">Filho/a</option><option value="titular">Ale</option><option value="conjuge">Dani</option></select></div>
+        <div class="field"><label>Valor pago (R$) *</label><input type="number" id="f-valor" min="0" step="0.01" placeholder="0,00"/></div>
+        <div class="field"><label>Reembolso recebido (R$)</label><input type="number" id="f-reemb" min="0" step="0.01" placeholder="0,00"/><div class="field-hint">Valor devolvido pelo plano de saúde</div></div>
+        <div class="field full"><label>Observações</label><input type="text" id="f-obs" placeholder="Ex: Reembolso parcial ANS, NF 1234…"/></div>
+        <div class="field full">
+          <label>Anexos — comprovantes, notas fiscais, recibos</label>
+          <div class="dropzone" id="dropzone">
+            <input type="file" id="f-files" multiple accept="image/*,.pdf">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            <p><strong>Clique ou arraste</strong> arquivos aqui</p>
+            <p style="font-size:11px;margin-top:2px">JPG, PNG, GIF, WEBP, PDF</p>
+          </div>
+          <div class="attach-list" id="attach-pending"></div>
+        </div>
+      </div>
+      <div id="net-preview" class="alert alert-info mt-2 hidden" style="font-size:13.5px">
+        Dedutível líquido: <strong id="net-val"></strong>
+      </div>
+      <div id="form-error" class="alert alert-warn mt-2 hidden">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/></svg>
+        Preencha ao menos a descrição e o valor.
+      </div>
+      <div class="flex mt-3" style="gap:8px">
+        <button class="btn btn-primary" id="btn-save-despesa">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          Salvar despesa
+        </button>
+        <button class="btn" id="btn-clear-form">Limpar</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Documentos -->
+  <section id="tab-documentos" class="tab-content hidden">
+    <div class="filters">
+      <select id="df-cat"><option value="">Todas as categorias</option><option value="saude">Saúde</option><option value="educacao">Educação</option></select>
+      <select id="df-pag"><option value="">Todos os pagadores</option><option value="titular">Ale</option><option value="conjuge">Dani</option></select>
+      <select id="df-group">
+        <option value="categoria">Categoria / Pagador</option>
+        <option value="consulta" selected>Por consulta</option>
+        <option value="pasta">Por pasta</option>
+      </select>
+      <select id="df-view"><option value="grid">Galeria</option><option value="list">Lista</option></select>
+      <span class="filters-right" id="docs-summary"></span>
+      <button class="btn btn-sm" id="btn-import-docs">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Importar docs
+      </button>
+      <button class="btn btn-sm" id="btn-docs-sel-mode">Selecionar</button>
+      <button class="btn btn-sm hidden" id="btn-docs-sel-all">Todos</button>
+      <button class="btn btn-sm btn-danger hidden" id="btn-docs-del-sel" disabled>Excluir (0)</button>
+    </div>
+    <div id="docs-content"></div>
+  </section>
+
+  <!-- Resumo IR -->
+  <section id="tab-resumo" class="tab-content hidden">
+    <div class="alert alert-info mb-2">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/></svg>
+      Resumo por declarante para a ficha <strong>Pagamentos Efetuados</strong> do IRPF.
+      Despesas do filho entram na declaração de quem o declarar como dependente.
+    </div>
+    <div id="resumo-content"></div>
+  </section>
+
+  <!-- Reembolsos -->
+  <section id="tab-reembolsos" class="tab-content hidden">
+    <div class="filters">
+      <select id="rb-filter-plano">
+        <option value="">Todos os planos</option>
+        <option value="bradesco">Bradesco (Ale)</option>
+        <option value="sa_part">Sul. PART (Dani)</option>
+        <option value="sa_kc">Sul. KC (Dani)</option>
+      </select>
+      <select id="rb-filter-status">
+        <option value="">Todos os status</option>
+        <option value="solicitar">A solicitar</option>
+        <option value="solicitado">Solicitado</option>
+        <option value="concluido">Concluído</option>
+        <option value="na">N/A</option>
+      </select>
+    </div>
+    <div class="metric-grid" id="rb-summary" style="margin-bottom:1rem"></div>
+    <div class="card" style="padding:0;overflow-x:auto">
+      <table class="reemb-table">
+        <thead><tr id="rb-thead-row"></tr></thead>
+        <tbody id="rb-table-body"></tbody>
+        <tfoot id="rb-tfoot"></tfoot>
+      </table>
+    </div>
+  </section>
+
+  <!-- Config -->
+  <section id="tab-config" class="tab-content hidden">
+    <div class="card" style="max-width:480px">
+      <p style="font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:12px">Identificação</p>
+      <div class="form-grid mb-2">
+        <div class="field"><label>Nome do titular</label><input type="text" id="cfg-titular" placeholder="Seu nome"/></div>
+        <div class="field"><label>Nome do cônjuge</label><input type="text" id="cfg-conjuge" placeholder="Nome do cônjuge"/></div>
+        <div class="field"><label>Nome do filho/a</label><input type="text" id="cfg-filho" placeholder="Nome do filho/a"/></div>
+        <div class="field"><label>Ano-calendário</label><input type="number" id="cfg-ano" placeholder="2024"/></div>
+      </div>
+      <p style="font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:12px">Limites legais</p>
+      <div class="form-grid mb-2">
+        <div class="field full">
+          <label>Limite dedução educação por pessoa (R$)</label>
+          <input type="number" id="cfg-limite" step="0.01"/>
+          <div class="field-hint">R$ 3.561,50/pessoa – IRPF 2025 / Ano-calendário 2024</div>
+        </div>
+      </div>
+      <p style="font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:12px">Dados</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-sm" id="cfg-btn-export">Exportar JSON (com anexos)</button>
+        <label class="btn btn-sm" style="cursor:pointer">Importar JSON<input type="file" id="cfg-btn-import" accept=".json" style="display:none"></label>
+        <button class="btn btn-sm" id="cfg-btn-dedup">Remover duplicados</button>
+        <button class="btn btn-sm btn-danger" id="cfg-btn-clear">Apagar tudo</button>
+      </div>
+      <div id="storage-info" class="mt-2" style="font-size:11.5px;color:var(--muted)"></div>
+    </div>
+  </section>
+
+  <!-- Área de impressão (oculta na tela) -->
+  <div class="print-only" id="print-area"></div>
+
+</main>
+
+<!-- Import docs overlay -->
+<div id="import-docs-overlay" class="import-overlay hidden">
+  <div class="import-panel">
+    <div class="import-header">
+      <h2 style="font-size:16px;font-weight:600">Importar documentos</h2>
+      <button class="btn btn-sm" id="btn-close-idocs">✕</button>
+    </div>
+    <div class="import-body">
+      <div class="form-grid" style="margin-bottom:1rem">
+        <div class="field">
+          <label>Arquivos avulsos</label>
+          <input type="file" id="idocs-files-input" multiple accept="image/*,.pdf,.png,.jpg,.jpeg,.gif,.webp">
+        </div>
+        <div class="field">
+          <label>Pasta inteira</label>
+          <input type="file" id="idocs-folder-input" webkitdirectory multiple>
+        </div>
+      </div>
+      <div class="field-hint" style="margin-bottom:1rem">Arquivos com <strong>MM.DD</strong> no nome (ex: <em>01.16 - comprovante.pdf</em>) são vinculados automaticamente à consulta da mesma data</div>
+      <div id="idocs-preview"></div>
+    </div>
+    <div class="import-footer">
+      <button class="btn" id="btn-cancel-idocs">Cancelar</button>
+      <button class="btn btn-primary" id="btn-confirm-idocs" disabled>Importar documentos</button>
+    </div>
+  </div>
+</div>
+
+<!-- Import overlay -->
+<div id="import-overlay" class="import-overlay hidden">
+  <div class="import-panel">
+    <div class="import-header">
+      <h2 style="font-size:16px;font-weight:600">Importar planilha de saúde</h2>
+      <button class="btn btn-sm" id="btn-close-import">✕</button>
+    </div>
+    <div class="import-body">
+      <div class="field" style="margin-bottom:1rem">
+        <label>Link do Google Sheets</label>
+        <div style="display:flex;gap:8px">
+          <input type="url" id="import-sheet-url" placeholder="https://docs.google.com/spreadsheets/d/…" style="flex:1;padding:8px 11px;border:1px solid var(--border);border-radius:var(--r);font-size:13.5px;font-family:var(--font)">
+          <button class="btn btn-sm btn-primary" id="btn-fetch-sheet">Buscar</button>
+        </div>
+        <div class="field-hint">A planilha precisa estar compartilhada como <strong>"qualquer pessoa com o link pode visualizar"</strong></div>
+      </div>
+      <div class="form-grid" style="margin-bottom:1rem">
+        <div class="field">
+          <label>Ou baixe o arquivo (.xlsx / .csv)</label>
+          <input type="file" id="import-xlsx-input" accept=".xlsx,.xls,.csv">
+        </div>
+        <div class="field">
+          <label>Pasta de comprovantes <span style="color:var(--muted);font-weight:400">(opcional)</span></label>
+          <input type="file" id="import-folder-input" webkitdirectory multiple>
+          <div class="field-hint">Arquivos nomeados como <strong>MM.DD - Nome</strong> (ex: 01.16 - Dra Danielle)</div>
+        </div>
+      </div>
+      <div id="import-status" style="font-size:13px;color:var(--red);margin-bottom:8px"></div>
+      <div id="import-preview"></div>
+    </div>
+    <div class="import-footer">
+      <button class="btn" id="btn-cancel-import">Cancelar</button>
+      <button class="btn btn-primary" id="btn-confirm-import" disabled>Importar despesas</button>
+    </div>
+  </div>
+</div>
+
+<!-- Lightbox -->
+<div class="lightbox hidden" id="lightbox">
+  <div class="lightbox-inner">
+    <div class="lightbox-header">
+      <span id="lb-title"></span>
+      <button class="btn btn-sm" id="lb-close">✕</button>
+    </div>
+    <div class="lightbox-body" id="lb-body"></div>
+    <div class="lightbox-footer">
+      <button class="btn btn-sm" id="lb-dl">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Baixar
+      </button>
+      <button class="btn btn-sm" id="lb-close2">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="modal-backdrop hidden" id="modal-backdrop">
+  <div class="modal" id="modal-content"></div>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<!-- ── Bootstrap (ES modules) ───────────────────────────────────────────────── -->
+<script type="module">
+import { openDB }             from './src/db.js';
+import { loadDespesas, cfg }  from './src/state.js';
+import { loadCfg, saveCfg }   from './src/config.js';
+import { switchTab, renderAll, renderStorageInfo, toggleSelectionMode, toggleSelectAll, toggleItemSelection, deleteSelected } from './src/ui.js';
+import { setupDrop, handleFiles, removePending, updateNetPreview, saveDespesa, clearForm, editDespesa, deleteDespesa } from './src/form.js';
+import { renderDocs, toggleAttach, openLightbox, closeLightbox, dlCurrentLightbox, dlFile, toggleDocsSelMode, toggleDocsSelectAll, deleteSelectedDocs, openImportDocsOverlay, closeImportDocsOverlay, onDocsFilesChange, confirmDocsImport } from './src/docs.js';
+import { printReport }        from './src/print.js';
+import { exportJSON, importJSON } from './src/io.js';
+import { openImportOverlay, closeImportOverlay, onSheetChange, onFolderChange, confirmImport, fetchSheetFromUrl, syncSheet } from './src/import-xlsx.js';
+import { renderReembolsos } from './src/reembolsos.js';
+import { closeModal }         from './src/modal.js';
+import { today }              from './src/helpers.js';
+import { dbAll, dbDel }       from './src/db.js';
+import { replaceDespesas }    from './src/state.js';
+import { showModal, closeModal as closeM, toast } from './src/modal.js';
+
+// ── Boot ──────────────────────────────────────────────────────────────────────
+await openDB();
+loadDespesas();
+loadCfg();
+document.getElementById('f-data').value = today();
+setupDrop();
+renderAll();
+
+// ── Expõe handlers para onclick inline (necessário com ES modules) ────────────
+window._toggleAttach        = toggleAttach;
+window._editDespesa         = editDespesa;
+window._deleteDespesa       = deleteDespesa;
+window._openLightbox        = openLightbox;
+window._rmPending           = removePending;
+window._dlFile              = dlFile;
+window._toggleItemSelection = toggleItemSelection;
+window._syncSheet           = async function(btn) {
+  const valEl = document.getElementById('sync-status-val');
+  const subEl = document.getElementById('sync-status-sub');
+  btn.disabled    = true;
+  btn.textContent = 'Sincronizando…';
+  const result = await syncSheet();
+  btn.disabled    = false;
+  btn.textContent = 'Sincronizar planilha';
+  if (result.error) {
+    if (subEl) { subEl.textContent = result.error; subEl.style.color = 'var(--red,#e53e3e)'; }
+    return;
+  }
+  if (subEl) subEl.style.color = '';
+  const parts = [];
+  if (result.updated > 0) parts.push(`${result.updated} atualizada${result.updated !== 1 ? 's' : ''}`);
+  if (result.newCount > 0) parts.push(`${result.newCount} nova${result.newCount !== 1 ? 's' : ''} na planilha`);
+  if (subEl) subEl.textContent = parts.length ? parts.join(' · ') : `Tudo em dia · ${result.total} consultas`;
+  if (valEl) {
+    if (result.newCount > 0) { valEl.textContent = `+${result.newCount} nova${result.newCount !== 1 ? 's' : ''}`; valEl.style.color = 'var(--amber,#d97706)'; }
+    else { valEl.textContent = 'Em dia'; valEl.style.color = 'var(--teal)'; }
+  }
+  if (result.updated > 0) {
+    renderAll();
+    if (!document.getElementById('tab-reembolsos').classList.contains('hidden'))
+      import('./src/reembolsos.js').then(m => m.renderReembolsos());
+  }
+};
+
+// ── Event listeners — header ──────────────────────────────────────────────────
+document.getElementById('btn-export').addEventListener('click', exportJSON);
+document.getElementById('btn-import').addEventListener('change', importJSON);
+document.getElementById('btn-print').addEventListener('click', printReport);
+document.getElementById('btn-import-sheet').addEventListener('click', openImportOverlay);
+document.getElementById('btn-close-import').addEventListener('click', closeImportOverlay);
+document.getElementById('btn-fetch-sheet').addEventListener('click', fetchSheetFromUrl);
+document.getElementById('import-sheet-url').addEventListener('keydown', e => { if (e.key === 'Enter') fetchSheetFromUrl(); });
+document.getElementById('btn-cancel-import').addEventListener('click', closeImportOverlay);
+document.getElementById('btn-confirm-import').addEventListener('click', confirmImport);
+document.getElementById('import-xlsx-input').addEventListener('change', e => {
+  if (e.target.files[0]) onSheetChange(e.target.files[0]);
+});
+document.getElementById('import-folder-input').addEventListener('change', e => {
+  onFolderChange(e.target.files);
+});
+
+// ── Event listeners — nav tabs ────────────────────────────────────────────────
+document.querySelectorAll('.nav-tab').forEach(btn => {
+  btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+});
+
+// ── Event listeners — filtros de despesas ─────────────────────────────────────
+['ff-cat', 'ff-pag', 'ff-ben', 'ff-sort'].forEach(id => {
+  document.getElementById(id).addEventListener('change', () => import('./src/ui.js').then(m => m.renderDespesas()));
+});
+document.getElementById('btn-select-mode').addEventListener('click', toggleSelectionMode);
+document.getElementById('btn-select-all').addEventListener('click', toggleSelectAll);
+document.getElementById('btn-delete-selected').addEventListener('click', deleteSelected);
+
+// ── Event listeners — filtros de reembolsos ───────────────────────────────────
+['rb-filter-plano', 'rb-filter-status'].forEach(id => {
+  document.getElementById(id).addEventListener('change', renderReembolsos);
+});
+
+// ── Event listeners — filtros de documentos ───────────────────────────────────
+['df-cat', 'df-pag', 'df-group', 'df-view'].forEach(id => {
+  document.getElementById(id).addEventListener('change', renderDocs);
+});
+document.getElementById('btn-import-docs').addEventListener('click', openImportDocsOverlay);
+document.getElementById('btn-close-idocs').addEventListener('click', closeImportDocsOverlay);
+document.getElementById('btn-cancel-idocs').addEventListener('click', closeImportDocsOverlay);
+document.getElementById('btn-confirm-idocs').addEventListener('click', confirmDocsImport);
+document.getElementById('idocs-files-input').addEventListener('change', e => onDocsFilesChange(e.target.files));
+document.getElementById('idocs-folder-input').addEventListener('change', e => onDocsFilesChange(e.target.files));
+document.getElementById('btn-docs-sel-mode').addEventListener('click', toggleDocsSelMode);
+document.getElementById('btn-docs-sel-all').addEventListener('click', toggleDocsSelectAll);
+document.getElementById('btn-docs-del-sel').addEventListener('click', deleteSelectedDocs);
+
+// ── Event listeners — formulário ──────────────────────────────────────────────
+document.getElementById('f-valor').addEventListener('input', updateNetPreview);
+document.getElementById('f-reemb').addEventListener('input', updateNetPreview);
+document.getElementById('f-files').addEventListener('change', e => handleFiles(e.target.files));
+document.getElementById('btn-save-despesa').addEventListener('click', saveDespesa);
+document.getElementById('btn-clear-form').addEventListener('click', clearForm);
+
+// ── Event listeners — config ──────────────────────────────────────────────────
+['cfg-titular', 'cfg-conjuge', 'cfg-filho', 'cfg-ano', 'cfg-limite'].forEach(id => {
+  document.getElementById(id).addEventListener('input', saveCfg);
+});
+document.getElementById('cfg-btn-dedup').addEventListener('click', async () => {
+  const { despesas, removeDespesa, saveDespesasToStorage } = await import('./src/state.js');
+  const { dbDel } = await import('./src/db.js');
+
+  // Agrupa por data+desc+valor, mantém o primeiro, coleta os extras
+  const seen = new Map();
+  const toRemove = [];
+  for (const d of despesas) {
+    const key = `${d.data}|${d.desc}|${d.valor}`;
+    if (seen.has(key)) toRemove.push(d);
+    else seen.set(key, d);
+  }
+
+  if (!toRemove.length) { toast('Nenhum duplicado encontrado'); return; }
+
+  showModal(
+    `Remover ${toRemove.length} duplicado${toRemove.length !== 1 ? 's' : ''}?`,
+    `Foram encontradas ${toRemove.length} despesa${toRemove.length !== 1 ? 's' : ''} com mesma data, descrição e valor. A primeira ocorrência de cada uma será mantida.`,
+    [
+      { label: 'Cancelar', cls: 'btn', cb: closeM },
+      { label: 'Remover',  cls: 'btn btn-danger', cb: async () => {
+        for (const d of toRemove) {
+          for (const aid of (d.attachmentIds || [])) await dbDel(aid);
+          removeDespesa(d.id);
+        }
+        renderAll();
+        closeM();
+        toast(`${toRemove.length} duplicado${toRemove.length !== 1 ? 's' : ''} removido${toRemove.length !== 1 ? 's' : ''}`);
+      }},
+    ]
+  );
+});
+document.getElementById('cfg-btn-export').addEventListener('click', exportJSON);
+document.getElementById('cfg-btn-import').addEventListener('change', importJSON);
+document.getElementById('cfg-btn-clear').addEventListener('click', async () => {
+  showModal('Apagar todos os dados?', 'Todos os lançamentos e anexos serão removidos permanentemente.', [
+    { label: 'Cancelar',     cls: 'btn',           cb: closeM },
+    { label: 'Apagar tudo',  cls: 'btn btn-danger', cb: async () => {
+      const all = await dbAll();
+      for (const f of all) await dbDel(f.id);
+      replaceDespesas([]);
+      renderAll();
+      closeM();
+      toast('Dados apagados');
+    }},
+  ]);
+});
+
+// ── Event listeners — lightbox ────────────────────────────────────────────────
+document.getElementById('lightbox').addEventListener('click', closeLightbox);
+document.getElementById('lb-close').addEventListener('click',  () => closeLightbox());
+document.getElementById('lb-close2').addEventListener('click', () => closeLightbox());
+document.getElementById('lb-dl').addEventListener('click', dlCurrentLightbox);
+</script>
+
+</body>
+</html>

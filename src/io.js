@@ -37,7 +37,9 @@ export async function exportJSON() {
 
 // ── Sync via URL hash ─────────────────────────────────────────────────────────
 export function gerarLinkSync() {
-  const payload = { version: 3, syncAt: new Date().toISOString(), config: cfg, despesas };
+  let irSync = null;
+  try { irSync = JSON.parse(localStorage.getItem('ir_sync') || 'null'); } catch { /* ignore */ }
+  const payload = { version: 3, syncAt: new Date().toISOString(), config: cfg, despesas, irSync };
   const encoded = encodeB64(JSON.stringify(payload));
   const url     = `${PAGES_URL}#sync=${encoded}`;
   window.open(url, '_blank');
@@ -52,6 +54,7 @@ export function checkSyncURL() {
     if (!data.despesas) return;
     replaceDespesas(data.despesas);
     if (data.config) { updateCfg(data.config); loadCfg(); }
+    if (data.irSync) localStorage.setItem('ir_sync', JSON.stringify(data.irSync));
     renderAll();
     history.replaceState(null, null, window.location.pathname);
     toast(`✓ ${data.despesas.length} despesas sincronizadas do app local!`);

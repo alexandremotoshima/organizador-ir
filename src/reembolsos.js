@@ -1,6 +1,7 @@
 // ── Aba Reembolsos ────────────────────────────────────────────────────────────
 import { despesas, cfg, saveDespesasToStorage } from './state.js';
 import { brl, fmtDate, escH } from './helpers.js';
+import { syncDespesaToSheet } from './sheet-write.js';
 
 // ── Carta de reembolso complementar ──────────────────────────────────────────
 const PLANO_NOMES = {
@@ -221,6 +222,7 @@ window._rbSetStatus = function(expId, plano, status) {
     if (status !== 'concluido') r.valor = 0;
   }
   saveDespesasToStorage();
+  syncDespesaToSheet(d);
   renderReembolsos();
 };
 
@@ -231,6 +233,7 @@ window._rbSetValor = function(expId, plano, valor) {
   const r = d.reembolsos.find(x => x.plano === plano);
   if (r) r.valor = parseFloat(String(valor).replace(',', '.')) || 0;
   saveDespesasToStorage();
+  syncDespesaToSheet(d);
 };
 
 window._rbSetDoc = function(expId, field, checked) {
@@ -238,6 +241,7 @@ window._rbSetDoc = function(expId, field, checked) {
   if (!d) return;
   d[field] = checked;
   saveDespesasToStorage();
+  syncDespesaToSheet(d);
 };
 
 window._rbGerarCarta = function(expId, planoReembolsante) {

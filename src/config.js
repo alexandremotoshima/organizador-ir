@@ -11,22 +11,24 @@ export function updatePersonLabels() {
 
 /** Carrega os valores de cfg nos campos de formulário */
 export function loadCfg() {
-  document.getElementById('cfg-titular').value = cfg.titular || '';
-  document.getElementById('cfg-conjuge').value = cfg.conjuge || '';
-  document.getElementById('cfg-filho').value   = cfg.filho   || '';
-  document.getElementById('cfg-ano').value     = cfg.ano     || '2024';
-  document.getElementById('cfg-limite').value  = cfg.limiteEduc ?? DEFAULT_LIMITE_EDUC;
+  document.getElementById('cfg-titular').value    = cfg.titular    || '';
+  document.getElementById('cfg-conjuge').value    = cfg.conjuge    || '';
+  document.getElementById('cfg-filho').value      = cfg.filho      || '';
+  document.getElementById('cfg-ano').value        = cfg.ano        || '2024';
+  document.getElementById('cfg-limite').value     = cfg.limiteEduc ?? DEFAULT_LIMITE_EDUC;
+  document.getElementById('cfg-script-url').value = cfg.scriptUrl  || '';
   updatePersonLabels();
 }
 
 /** Lê os campos e persiste */
 export function saveCfg() {
   updateCfg({
-    titular:    document.getElementById('cfg-titular').value.trim() || 'Ale',
-    conjuge:    document.getElementById('cfg-conjuge').value.trim() || 'Dani',
-    filho:      document.getElementById('cfg-filho').value.trim()   || 'Filho/a',
-    ano:        document.getElementById('cfg-ano').value            || '2024',
+    titular:    document.getElementById('cfg-titular').value.trim()    || 'Ale',
+    conjuge:    document.getElementById('cfg-conjuge').value.trim()    || 'Dani',
+    filho:      document.getElementById('cfg-filho').value.trim()      || 'Filho/a',
+    ano:        document.getElementById('cfg-ano').value               || '2024',
     limiteEduc: parseFloat(document.getElementById('cfg-limite').value) || DEFAULT_LIMITE_EDUC,
+    scriptUrl:  document.getElementById('cfg-script-url').value.trim(),
   });
   updatePersonLabels();
   renderAll();

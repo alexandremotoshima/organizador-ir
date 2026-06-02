@@ -222,6 +222,14 @@
           <div class="field-hint">R$ 3.561,50/pessoa – IRPF 2025 / Ano-calendário 2024</div>
         </div>
       </div>
+      <p style="font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:12px">Sincronização com planilha</p>
+      <div class="form-grid mb-2">
+        <div class="field full">
+          <label>URL do Apps Script (sync bidirecional)</label>
+          <input type="url" id="cfg-script-url" placeholder="https://script.google.com/macros/s/…/exec"/>
+          <div class="field-hint">Cole aqui a URL gerada ao implantar o <strong>apps-script.gs</strong> no Google Sheets</div>
+        </div>
+      </div>
       <p style="font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:12px">Dados</p>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         <button class="btn btn-sm" id="cfg-btn-export">Exportar JSON (com anexos)</button>

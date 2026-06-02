@@ -11,6 +11,7 @@ export let cfg = {
   filho:      'Filho/a',
   ano:        '2024',
   limiteEduc: DEFAULT_LIMITE_EDUC,
+  scriptUrl:  '',
 };
 
 // ── Boot (sem localStorage) ───────────────────────────────────────────────────

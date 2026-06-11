@@ -26,10 +26,20 @@ async function loadXLSX() {
 }
 
 // ── Helpers de parsing ────────────────────────────────────────────────────────
+function normalizeHeader(v) {
+  return String(v ?? '')
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toUpperCase();
+}
+
 function parseBRL(v) {
   if (typeof v === 'number') return v;           // raw:true → número direto
-  if (!v) return 0;
-  const s = v.toString().replace(/R\$\s*/g, '').replace(/\s/g, '').trim();
+  if (v == null) return 0;
+  const s = String(v).replace(/R\$\s*/g, '').replace(/\s/g, '').trim();
+  if (!s || /^N\/?A$/i.test(s) || /^-+$/.test(s)) return 0;
   if (!s) return 0;
   // Detecta separador decimal: se vírgula existe e vem depois do ponto → BR "1.234,56"
   if (s.includes(',') && s.includes('.')) {
@@ -219,7 +229,7 @@ export async function onSheetChange(file) {
 
     if (rows.length < 2) throw new Error('Planilha sem dados.');
 
-    const normalize = h => (h == null ? '' : String(h)).replace(/^﻿/, '').trim().toUpperCase();
+    const normalize = h => normalizeHeader(h).replace(/^﻿/, '');
 
     // Localiza a linha de cabeçalho (busca nas primeiras 10 linhas)
     let headerIdx = -1;
@@ -235,10 +245,10 @@ export async function onSheetChange(file) {
     }
 
     const hdrs = rows[headerIdx].map(normalize);
-    const col  = (...terms) => hdrs.findIndex(h => terms.some(t => h.includes(t)));
+    const col  = (...terms) => hdrs.findIndex(h => terms.some(t => h.includes(normalizeHeader(t))));
 
     const nextValor = (stIdx) =>
-      (stIdx >= 0 && (hdrs[stIdx + 1] || '').includes('VALOR')) ? stIdx + 1 : -1;
+      (stIdx >= 0 && normalizeHeader(hdrs[stIdx + 1] || '').includes('VALOR')) ? stIdx + 1 : -1;
 
     // Prefere a coluna DATA MM/DD ou DATA MM/DD/YYYY (correlação com diretórios MM.DD) se existir
     const dataMmDdIdx = hdrs.findIndex(h => /DATA\s*MM\/DD(?:\/YYYY)?/i.test(h));
@@ -558,7 +568,7 @@ export async function syncSheet() {
     const rows = XLSX.utils.sheet_to_json(ws, { header: 1, raw: true, defval: '' });
     if (rows.length < 2) return { newCount: 0, total: 0, updated: 0 };
 
-    const normalize = h => (h == null ? '' : String(h)).replace(/^﻿/, '').trim().toUpperCase();
+    const normalize = h => normalizeHeader(h).replace(/^﻿/, '');
     let headerIdx = -1;
     for (let i = 0; i < Math.min(10, rows.length); i++) {
       const r = rows[i].map(normalize);
@@ -567,9 +577,9 @@ export async function syncSheet() {
     if (headerIdx < 0) return { error: 'Cabeçalho não encontrado' };
 
     const hdrs = rows[headerIdx].map(normalize);
-    const col  = (...terms) => hdrs.findIndex(h => terms.some(t => h.includes(t)));
+    const col  = (...terms) => hdrs.findIndex(h => terms.some(t => h.includes(normalizeHeader(t))));
     const nextValor = (stIdx) =>
-      (stIdx >= 0 && (hdrs[stIdx + 1] || '').includes('VALOR')) ? stIdx + 1 : -1;
+      (stIdx >= 0 && normalizeHeader(hdrs[stIdx + 1] || '').includes('VALOR')) ? stIdx + 1 : -1;
 
     // Prefere a coluna DATA MM/DD ou DATA MM/DD/YYYY (correlação com diretórios MM.DD) se existir
     const dataMmDdIdx = hdrs.findIndex(h => /DATA\s*MM\/DD(?:\/YYYY)?/i.test(h));

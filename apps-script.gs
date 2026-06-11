@@ -64,8 +64,8 @@ function updateRow(data) {
 
   const fc = (...terms) => hdrs.findIndex(h => terms.some(t => h.includes(t)));
 
-  // Prefere coluna DATA MM/DD se existir
-  const dataMmDdCol = hdrs.findIndex(h => h.includes('DATA MM/DD'));
+  // Prefere a coluna DATA MM/DD ou DATA MM/DD/YYYY, se existir
+  const dataMmDdCol = hdrs.findIndex(h => /DATA\s*MM\/DD(?:\/YYYY)?/i.test(h));
   const dateCol     = dataMmDdCol >= 0 ? dataMmDdCol : fc('DATA');
   const medicoCol   = fc('MÉDICO', 'MEDICO');
   const especCol    = fc('ESPECIALIDADE');

@@ -240,8 +240,8 @@ export async function onSheetChange(file) {
     const nextValor = (stIdx) =>
       (stIdx >= 0 && (hdrs[stIdx + 1] || '').includes('VALOR')) ? stIdx + 1 : -1;
 
-    // Prefere coluna DATA MM/DD/YYYY (correlação com diretórios MM.DD) se existir
-    const dataMmDdIdx = hdrs.findIndex(h => h.includes('DATA MM/DD'));
+    // Prefere a coluna DATA MM/DD ou DATA MM/DD/YYYY (correlação com diretórios MM.DD) se existir
+    const dataMmDdIdx = hdrs.findIndex(h => /DATA\s*MM\/DD(?:\/YYYY)?/i.test(h));
     const C = {
       data:     dataMmDdIdx >= 0 ? dataMmDdIdx : col('DATA'),
       medico:   col('MÉDICO', 'MEDICO'),
@@ -569,8 +569,8 @@ export async function syncSheet() {
     const nextValor = (stIdx) =>
       (stIdx >= 0 && (hdrs[stIdx + 1] || '').includes('VALOR')) ? stIdx + 1 : -1;
 
-    // Prefere coluna DATA MM/DD/YYYY (correlação com diretórios MM.DD) se existir
-    const dataMmDdIdx = hdrs.findIndex(h => h.includes('DATA MM/DD'));
+    // Prefere a coluna DATA MM/DD ou DATA MM/DD/YYYY (correlação com diretórios MM.DD) se existir
+    const dataMmDdIdx = hdrs.findIndex(h => /DATA\s*MM\/DD(?:\/YYYY)?/i.test(h));
     const C = {
       data:     dataMmDdIdx >= 0 ? dataMmDdIdx : col('DATA'),
       medico:   col('MÉDICO', 'MEDICO'),

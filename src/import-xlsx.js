@@ -279,6 +279,7 @@ export async function onSheetChange(file) {
       .map((r, i) => {
         const medico = r[C.medico]?.toString().trim() || '';
         const espec  = r[C.espec]?.toString().trim()  || '';
+        const desc   = C.desc >= 0 ? r[C.desc]?.toString().trim() || '' : medico + (espec ? ` – ${espec}` : '');
         const pago   = r[C.pagoPor]?.toString().trim();
         const valor  = parseBRL(r[C.valor]);
         const naoR   = parseBRL(r[C.naoR]);
@@ -297,7 +298,7 @@ export async function onSheetChange(file) {
           _i: i,
           date,
           rawDate,
-          desc:           medico + (espec ? ` – ${espec}` : ''),
+          desc,
           pagador:        pago === 'Ale' ? 'titular' : pago === 'Dani' ? 'conjuge' : 'titular',
           valor,
           reembolso:      Math.max(0, valor - naoR),
@@ -612,7 +613,7 @@ export async function syncSheet() {
       const date   = parseDate(row[C.data], dateFmt);
       const medico = row[C.medico]?.toString().trim() || '';
       const espec  = row[C.espec]?.toString().trim()  || '';
-      const desc   = medico + (espec ? ` – ${espec}` : '');
+      const desc   = C.desc >= 0 ? row[C.desc]?.toString().trim() || '' : medico + (espec ? ` – ${espec}` : '');
       const valor  = parseBRL(row[C.valor]);
 
       const d = despesas.find(x => x.data === date && x.valor === valor && x.desc === desc);

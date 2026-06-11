@@ -69,6 +69,7 @@ function updateRow(data) {
   const dateCol     = dataMmDdCol >= 0 ? dataMmDdCol : fc('DATA');
   const medicoCol   = fc('MÉDICO', 'MEDICO');
   const especCol    = fc('ESPECIALIDADE');
+  const descCol     = fc('DESCRIÇÃO', 'DESCRICAO', 'DESC');
   const valorCol    = fc('VALOR TOT', 'VALOR TOTAL');
   const bradStCol   = fc('BRADESCO', 'BRADESC');
   const saPartStCol = fc('SULAMERICA PA', 'SUL AMERICA PA');
@@ -84,6 +85,15 @@ function updateRow(data) {
 
   // Converte data do app (YYYY-MM-DD) para comparação
   const [year, month, day] = data.date.split('-').map(Number);
+
+  function normalizeText(v) {
+    return String(v ?? '')
+      .normalize('NFKC')
+      .replace(/\s+/g, ' ')
+      .replace(/\s*–\s*/g, ' – ')
+      .trim()
+      .toLowerCase();
+  }
 
   function dateMatches(cellVal) {
     if (cellVal instanceof Date) {
@@ -114,8 +124,10 @@ function updateRow(data) {
 
     const medico  = String(row[medicoCol] || '').trim();
     const espec   = String(row[especCol]  || '').trim();
-    const rowDesc = medico + (espec ? ' – ' + espec : '');
-    if (rowDesc !== data.desc) continue;
+    const rowDesc = descCol >= 0
+      ? String(row[descCol] || '').trim()
+      : medico + (espec ? ' – ' + espec : '');
+    if (normalizeText(rowDesc) !== normalizeText(data.desc)) continue;
 
     // Linha encontrada — atualiza células
     const rn = i + 1; // 1-based

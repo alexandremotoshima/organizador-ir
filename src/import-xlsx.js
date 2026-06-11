@@ -246,6 +246,7 @@ export async function onSheetChange(file) {
       data:     dataMmDdIdx >= 0 ? dataMmDdIdx : col('DATA'),
       medico:   col('MÉDICO', 'MEDICO'),
       espec:    col('ESPECIALIDADE'),
+      desc:     col('DESCRIÇÃO', 'DESCRICAO', 'DESC'),
       valor:    col('VALOR TOT', 'VALOR TOTAL'),
       pagoPor:  col('PAGO PO', 'PAGO POR'),
       naoR:     col('NÃO REEM', 'NAO REEM', 'NÃO REEMB', 'NAO REEMB', 'NÃO REEMBOLSADO', 'NAO REEMBOLSADO'),
@@ -279,7 +280,7 @@ export async function onSheetChange(file) {
       .map((r, i) => {
         const medico = r[C.medico]?.toString().trim() || '';
         const espec  = r[C.espec]?.toString().trim()  || '';
-        const desc   = C.desc >= 0 ? r[C.desc]?.toString().trim() || '' : medico + (espec ? ` – ${espec}` : '');
+        const desc   = (C.desc >= 0 ? (r[C.desc]?.toString().trim() || '') : '') || (medico + (espec ? ` – ${espec}` : ''));
         const pago   = r[C.pagoPor]?.toString().trim();
         const valor  = parseBRL(r[C.valor]);
         const naoR   = parseBRL(r[C.naoR]);
@@ -576,6 +577,7 @@ export async function syncSheet() {
       data:     dataMmDdIdx >= 0 ? dataMmDdIdx : col('DATA'),
       medico:   col('MÉDICO', 'MEDICO'),
       espec:    col('ESPECIALIDADE'),
+      desc:     col('DESCRIÇÃO', 'DESCRICAO', 'DESC'),
       valor:    col('VALOR TOT', 'VALOR TOTAL'),
       pagoPor:  col('PAGO PO', 'PAGO POR'),
       naoR:     col('NÃO REEM', 'NAO REEM', 'NÃO REEMB', 'NAO REEMB', 'NÃO REEMBOLSADO', 'NAO REEMBOLSADO'),
@@ -613,7 +615,7 @@ export async function syncSheet() {
       const date   = parseDate(row[C.data], dateFmt);
       const medico = row[C.medico]?.toString().trim() || '';
       const espec  = row[C.espec]?.toString().trim()  || '';
-      const desc   = C.desc >= 0 ? row[C.desc]?.toString().trim() || '' : medico + (espec ? ` – ${espec}` : '');
+      const desc   = (C.desc >= 0 ? (row[C.desc]?.toString().trim() || '') : '') || (medico + (espec ? ` – ${espec}` : ''));
       const valor  = parseBRL(row[C.valor]);
 
       const d = despesas.find(x => x.data === date && x.valor === valor && x.desc === desc);

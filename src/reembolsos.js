@@ -52,6 +52,50 @@ function ensureReembolsos(d) {
   }
 }
 
+// ── Limpeza de dados: remove duplicatas com descrições inválidas ───────────────
+export function cleanupDuplicates() {
+  const INVALID_DESC = new Set(['Solicitar', 'Solicitado', 'Concluído', 'Concluido', 'N/A', 'NA']);
+  
+  // Agrupa despesas por (data + valor)
+  const groups = new Map();
+  for (const d of despesas) {
+    const key = `${d.data}|${d.valor}`;
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(d);
+  }
+  
+  // Para cada grupo com múltiplas despesas, remove as com descrição inválida
+  const toRemove = [];
+  for (const [key, items] of groups.entries()) {
+    if (items.length <= 1) continue;
+    
+    // Separa válidas e inválidas
+    const valid   = items.filter(d => !INVALID_DESC.has(d.desc?.trim()));
+    const invalid = items.filter(d => INVALID_DESC.has(d.desc?.trim()));
+    
+    // Se houver válidas, remove as inválidas
+    if (valid.length > 0 && invalid.length > 0) {
+      toRemove.push(...invalid);
+    } else if (valid.length === 0 && invalid.length > 1) {
+      // Se todas são inválidas, mantém a primeira e remove o resto
+      toRemove.push(...invalid.slice(1));
+    }
+  }
+  
+  // Remove as duplicatas
+  for (const d of toRemove) {
+    const idx = despesas.findIndex(x => x.id === d.id);
+    if (idx >= 0) despesas.splice(idx, 1);
+  }
+  
+  if (toRemove.length > 0) {
+    console.log(`[Cleanup] Removidas ${toRemove.length} despesa(s) duplicada(s) com descrição inválida`);
+    saveDespesasToStorage();
+  }
+  
+  return toRemove.length;
+}
+
 export function renderReembolsos() {
   const fPlano  = document.getElementById('rb-filter-plano')?.value  || '';
   const fStatus = document.getElementById('rb-filter-status')?.value || '';

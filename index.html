@@ -193,6 +193,10 @@
         <option value="concluido">Concluído</option>
         <option value="na">N/A</option>
       </select>
+      <button class="btn btn-sm" id="btn-cleanup-duplicates" title="Remove despesas duplicadas com descrições inválidas">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M1 4v6h6M23 20v-6h-6"/></svg>
+        Limpar duplicatas
+      </button>
     </div>
     <div class="metric-grid" id="rb-summary" style="margin-bottom:1rem"></div>
     <div class="card" style="padding:0;overflow-x:auto">
@@ -467,6 +471,16 @@ document.getElementById('btn-delete-selected').addEventListener('click', deleteS
 // ── Event listeners — filtros de reembolsos ───────────────────────────────────
 ['rb-filter-plano', 'rb-filter-status'].forEach(id => {
   document.getElementById(id).addEventListener('change', renderReembolsos);
+});
+document.getElementById('btn-cleanup-duplicates').addEventListener('click', async () => {
+  const { cleanupDuplicates } = await import('./src/reembolsos.js');
+  const removed = cleanupDuplicates();
+  if (removed > 0) {
+    renderAll();
+    toast(`✓ Removidas ${removed} linha(s) duplicada(s)`);
+  } else {
+    toast('✓ Nenhuma duplicata encontrada');
+  }
 });
 
 // ── Event listeners — filtros de documentos ───────────────────────────────────
